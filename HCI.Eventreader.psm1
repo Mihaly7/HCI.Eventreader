@@ -80,7 +80,7 @@ Else
 
 #End
 return $hfilter
-
+    }
 <#
 .SYNOPSIS
 Get eventlog entries from an SDDC dataset (https://aka.ms/s2ddiag) or its node in filtered format
@@ -199,7 +199,7 @@ $filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration 
     }
  }
 
-}
+
 
 <#
 .SYNOPSIS
@@ -312,4 +312,3 @@ if ($Filterinformation -eq $true)
 
     }
 
-    Export-ModuleMember -Function Get-SDDCevents;Get-ClusterOSEvents
