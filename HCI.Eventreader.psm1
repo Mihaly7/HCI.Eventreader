@@ -291,11 +291,11 @@ if ($Filterinformation -eq $true)
 
     foreach ($ClusterNode in $ClusterNodes)
         {
-            Write-host "$clusternode.tostring().toupper()'s $logname log" -ForegroundColor Yellow
+            Write-host "$clusternode's $logname log" -ForegroundColor Yellow
 
 # Read log
     $filter
-    $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter -verbose | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} 
+    $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} 
 
 
 # Write log entries to host
