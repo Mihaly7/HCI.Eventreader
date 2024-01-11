@@ -66,7 +66,7 @@ Else
 
 
 
-    $hFilter = @{logname = $hLogname;Starttime = $sTime; Endtime = $eTime}
+    $hFilter = @{Logname = $hLogname;Starttime = $sTime; Endtime = $eTime}
     If ($hEventId -ne $null)
         {
         $hFilter = $hFilter+@{ID= $hEventID}
@@ -296,7 +296,7 @@ if ($Filterinformation -eq $true)
 # Read log
     $filter
     $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} 
-
+    $output = $output | Where-Object message -like "*$message*"
 
 # Write log entries to host
     
