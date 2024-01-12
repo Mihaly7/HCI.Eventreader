@@ -11,10 +11,9 @@ Function New-Hashtable
 {
 Param
     (
-    [Parameter(Mandatory=$true)]    
-        [string]$hLogname = $null, 
-
-    [Parameter(Mandatory=$false)]
+      
+        $hLogname = $null,
+        $hlogpath = $null, 
         [array]$hEventId = $null,
         [array]$hProviderName = $null,
         [string]$hDate = (get-date -format "MM/dd/yyyy"),
@@ -66,7 +65,17 @@ Else
 
 
 
-    $hFilter = @{logname = $hLogname;Starttime = $sTime; Endtime = $eTime}
+$hFilter = @{Starttime = $sTime; Endtime = $eTime};
+    
+#adding parameters    
+    If ($hLogname -ne $null)
+        {
+        $hFilter = $hFilter+@{LogName = $hLogname};
+        }
+    If ($hLogpath -ne $null)
+        {
+        $hFilter = $hFilter+@{Path= $hLogpath};
+        }
     If ($hEventId -ne $null)
         {
         $hFilter = $hFilter+@{ID= $hEventID}
@@ -149,7 +158,10 @@ Function Get-SDDCevents
         [array]$EventId = $null,
         [bool]$FilterInformation = $false,
         [array]$ProviderName = $null,
-        [bool]$Backwards = $false
+        [bool]$Backwards = $false,
+        [bool]$detailed = $false
+        
+
     )
 # Gather evtx files
 
@@ -162,11 +174,11 @@ if ($Filterinformation -eq $true)
         [int]$maxlevel = 3 
     }
 
-$Evtxfiles = Get-ChildItem -path $path -filter "$LogName*" -Include *.evtx -Recurse
+$Evtxfiles = Get-ChildItem -path $path -filter "$Logname*" -Include *.evtx -Recurse
 
 #create Hashtable
 
-$filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction SilentlyContinue
+
 
 
 # Read logs
@@ -180,9 +192,12 @@ $filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration 
     
     Write-Host "Log location: $Evtxfile `n" -ForegroundColor Yellow
 
+$filter = New-Hashtable -hLogpath $Evtxfile.fullname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction stop
+
 # Read log
 
-            $output =  Get-winevent -path $path -FilterHashtable $Filter -ErrorAction SilentlyContinue  | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} 
+
+            $output = Get-winevent -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} 
                         
 
 
