@@ -336,8 +336,7 @@ if ($Clusternodes -eq $null)
         }
     If ($ExportToXML -eq $true)
         {
-            
-            $output | Export-Clixml -Path $ClusterNodes+"_"+$logname+"_"+($date).replace("/","")".xml"
+            $output | Export-Clixml -Path $ClusterNodes+"_"+$logname+"_"+($date).replace("/","")+".xml"
         }
     }
 
