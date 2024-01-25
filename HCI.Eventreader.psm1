@@ -291,8 +291,6 @@ Function Get-ClusterOSEvents
 
 #create Hashtable
 
-
-
 $filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction SilentlyContinue
 
 # Default event level: Informational included
@@ -303,6 +301,13 @@ if ($Filterinformation -eq $true)
     {
         [int]$maxlevel = 3 
     }
+#revert to local computer if clusternodes are not defined
+if ($Clusternodes -eq $null)
+        {
+            $ClusterNodes = $env:COMPUTERNAME
+        }
+
+#start event reading
 
     foreach ($ClusterNode in $ClusterNodes)
         {
