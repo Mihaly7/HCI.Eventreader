@@ -314,8 +314,12 @@ if ($Clusternodes -eq $null)
             Write-host "$clusternode's $logname log" -ForegroundColor Yellow
 
 # Read log
-    $filter
+    
+    # Filter by message
+            
+    
     $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} 
+    $output = $output | where message -like "*$message*"
 
 
 # Write log entries to host
@@ -329,6 +333,6 @@ if ($Clusternodes -eq $null)
             $output | Sort-Object TimeCreated | Format-Table Timecreated,Providername,Id,Leveldisplayname,Message 
             }
         }
-
+   
     }
 
