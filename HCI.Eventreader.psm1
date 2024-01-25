@@ -266,7 +266,7 @@ Get-AZHCIClusterEvents -ClusterNodes strhci03,strhci02 -Logname *smbclient* -Fil
 .NOTES
 General notes
 #>
-Function Get-ClusterOSEvents
+Function Get-AzsOSEvents
 
     {
         
@@ -286,7 +286,8 @@ Function Get-ClusterOSEvents
             [string]$Date = (get-date -format "MM/dd/yyyy"),
             [string]$Time = (get-date -format "HH:mm:ss"),
             [string]$Duration  = "1",
-            [bool]$Detailed = $false
+            [bool]$Detailed = $false,
+            [bool]$ExportToXML = $false
         )
 
 #create Hashtable
@@ -319,20 +320,24 @@ if ($Clusternodes -eq $null)
             
     
     $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} 
-    $output = $output | where-ob message -like "*$message*"
+    $output = $output | Where-Object message -like "*$message*"
 
 
 # Write log entries to host
     
         if ($detailed -ne $false)
             {
-            $output | Sort-Object TimeCreated | Format-List Timecreated,Providername,Id,Leveldisplayname,Message 
+            $output | Sort-Object TimeCreated | Format-List Timecreated,Providername,Id,Leveldisplayname,Message,ProcessID,ThreadID,User,Machinename 
             }
         else
             {
-            $output | Sort-Object TimeCreated | Format-Table Timecreated,Providername,Id,Leveldisplayname,Message 
+            $output | Sort-Object TimeCreated | Format-Table Timecreated,Providername,Id,Leveldisplayname,Message -wrap
             }
         }
-   
+    If ($ExportToXML -eq $true)
+        {
+            
+            $output | Export-Clixml -Path $ClusterNodes+"_"+$logname+"_"+($date).replace("/","")".xml"
+        }
     }
 
