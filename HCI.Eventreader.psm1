@@ -277,7 +277,7 @@ Function Get-AzsOSEvents
            
         [Parameter(Mandatory=$false)]
             $Cluster = (Get-Cluster -ErrorAction SilentlyContinue),
-            $ClusterNodes = (Get-Clusternode -Cluster $cluster -ErrorAction SilentlyContinue ),
+            $ClusterNodes = $null,
             [string]$Message = $null,
             [array]$EventId = $null,
             [bool]$FilterInformation = $false,
@@ -289,6 +289,18 @@ Function Get-AzsOSEvents
             [bool]$Detailed = $false,
             [bool]$ExportToXML = $false
         )
+
+#gather clusternodes if not defined
+If ($cluster -ne $null)
+        {
+        $ClusterNodes = Get-ClusterNode -Cluster $Cluster -ErrorAction SilentlyContinue
+        }        
+
+        #revert to local computer if clusternodes are not defined
+if ($Clusternodes -eq $null)
+        {
+            $ClusterNodes = $env:COMPUTERNAME
+        }
 
 #create Hashtable
 
@@ -302,11 +314,7 @@ if ($Filterinformation -eq $true)
     {
         [int]$maxlevel = 3 
     }
-#revert to local computer if clusternodes are not defined
-if ($Clusternodes -eq $null)
-        {
-            $ClusterNodes = $env:COMPUTERNAME
-        }
+
 
 #start event reading
 
@@ -336,7 +344,10 @@ if ($Clusternodes -eq $null)
         }
     If ($ExportToXML -eq $true)
         {
-            $output | Export-Clixml -Path $ClusterNodes+"_"+$logname+"_"+($date).replace("/","")+".xml"
+            $filedate = (get-date -Format mmddyyyy_hhmmss).tostring()
+            [string]$filename = "$ClusterNodes_$logname_$filedate_$filedate.xml"
+            Write-Host "Exporting "$clusternode"'s "$Logname" log as:"$filename -ForegroundColor Yellow
+            $output | Export-Clixml -Path $filename
         }
     }
 
