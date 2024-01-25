@@ -16,4 +16,4 @@ Install the module:
 
 Get the readme of the command:
 
-`Get-Help Get-ClusterOSevents -full`
+`Get-Help Get-AzsOSevents -full`
