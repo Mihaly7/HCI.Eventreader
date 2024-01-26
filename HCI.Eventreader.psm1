@@ -163,7 +163,15 @@ Function Get-SDDCevents
         
 
     )
+
 # Gather evtx files
+$Evtxfiles = Get-ChildItem -path $path -filter "$Logname*" -Include *.evtx -Recurse
+
+#create Hashtable
+$filter = New-Hashtable -hLogpath $Evtxfile.fullname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction stop
+
+Write-Host "Used filters:" -ForegroundColor Yellow
+$filter
 
 # Default event level: Informational included
 # Information level filter
@@ -172,16 +180,12 @@ $maxlevel = 4
 if ($Filterinformation -eq $true)
     {
         [int]$maxlevel = 3 
+        Write-host "Information events excluded" -ForegroundColor Yellow
     }
-
-$Evtxfiles = Get-ChildItem -path $path -filter "$Logname*" -Include *.evtx -Recurse
-
-#create Hashtable
-
-
-
-
-# Read logs
+else 
+    {
+        Write-host "All events included" -ForegroundColor Yellow    
+    }# Read logs
 
     foreach($Evtxfile in $Evtxfiles)
     {
@@ -192,7 +196,6 @@ $Evtxfiles = Get-ChildItem -path $path -filter "$Logname*" -Include *.evtx -Recu
     
     Write-Host "Log location: $Evtxfile `n" -ForegroundColor Yellow
 
-$filter = New-Hashtable -hLogpath $Evtxfile.fullname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction stop
 
 # Read log
 
@@ -306,6 +309,10 @@ if ($Clusternodes -eq $null)
 
 $filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction SilentlyContinue
 
+Write-Host "Used filters:" -ForegroundColor Yellow
+$filter
+
+
 # Default event level: Informational included
 # Information level filter
 $maxlevel = 4
@@ -313,6 +320,11 @@ $maxlevel = 4
 if ($Filterinformation -eq $true)
     {
         [int]$maxlevel = 3 
+        Write-host "Information events excluded" -ForegroundColor Yellow
+    }
+else 
+    {
+        Write-host "All events included" -ForegroundColor Yellow    
     }
 
 
@@ -321,13 +333,17 @@ if ($Filterinformation -eq $true)
     foreach ($ClusterNode in $ClusterNodes)
         {
             Write-host "$clusternode's $logname log" -ForegroundColor Yellow
+            
+            
+            
 
 # Read log
     
     # Filter by message
             
     
-    $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} 
+    Try {$output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter -ErrorAction stop | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} }
+    Catch {Write-Host $_.Exception.Message -ForegroundColor Red}
     $output = $output | Where-Object message -like "*$message*"
 
 
