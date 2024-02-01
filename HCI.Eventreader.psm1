@@ -168,7 +168,7 @@ Function Get-SDDCevents
 $Evtxfiles = Get-ChildItem -path $path -filter "$Logname*" -Include *.evtx -Recurse
 
 #create Hashtable
-$filter = New-Hashtable -hLogpath $Evtxfile.fullname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction stop
+$filter = New-Hashtable -hLogname $logname -hLogpath $Evtxfile.fullname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction stop
 
 Write-Host "Used filters:" -ForegroundColor Yellow
 $filter
