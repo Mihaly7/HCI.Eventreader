@@ -1,5 +1,5 @@
 ####################################################################
-#                                                                  #    
+#                                                                  #
 # For readme, go to https://github.com/Mihaly7/HCI.Eventreader/    #
 #                                                                  #
 ####################################################################
@@ -11,18 +11,18 @@ Function New-Hashtable
 {
 Param
     (
-      
-        $hLogname = $null,
-        $hlogpath = $null, 
+    [Parameter(Mandatory=$false)]
+        [string]$hLogname = $null,
         [array]$hEventId = $null,
         [array]$hProviderName = $null,
         [string]$hDate = (get-date -format "MM/dd/yyyy"),
         [string]$hTime = (get-date -format "HH:mm:ss"),
         [string]$hDuration  = "1",
-        [bool]$hBackwards = $true
+        [bool]$hBackwards = $true,
+        [string]$hLogpath = $null
 
-        
-        
+
+
     )
 
 # Date and time conversion
@@ -32,7 +32,7 @@ If ($hBackwards -ne $false)
     {
     $M = "-"
     }
-Else 
+Else
     {
     $M = $null
     }
@@ -52,7 +52,7 @@ Else
 
 #$Backward Check
 
-If ($hbackwards -eq $true) 
+If ($hbackwards -eq $true)
     {
     $sTime = $endTime
     $eTime = $StartTime
@@ -61,13 +61,13 @@ Else
     {
     $sTime = $StartTime
     $eTime = $endTime
-    }    
+    }
 
 
 
 $hFilter = @{Starttime = $sTime; Endtime = $eTime};
-    
-#adding parameters    
+
+#adding parameters
     If ($hLogname -ne $null)
         {
         $hFilter = $hFilter+@{LogName = $hLogname};
@@ -135,7 +135,7 @@ Output will be in format-list format, disabled by default
 
 .EXAMPLE
 Checking system log in sddc on january 1st 2024 on all nodes from 2 hours before 10:00 AM
-Get-SDDCEvents -path C:\temp\info-cluster-202401011555 -logname system -date 01/01/2024 -time 00:10:00 -backwards 1 -duration 2 
+Get-SDDCEvents -path C:\temp\info-cluster-202401011555 -logname system -date 01/01/2024 -time 00:10:00 -backwards 1 -duration 2
 
 .NOTES
 General notes
@@ -143,15 +143,15 @@ General notes
 Function Get-SDDCevents
 
 {
-    
-    param 
+
+    param
     (
     [Parameter(Mandatory=$true)]
-        [string]$Logname = (Read-Host "Logname (* for wildcard)"), 
-        [string]$Date = (Read-Host  "Start date (format should be MM/DD/YYYY)"), 
+        [string]$Logfile = (Read-Host "Logname (* for wildcard)"),
+        [string]$Date = (Read-Host  "Start date (format should be MM/DD/YYYY)"),
         [string]$Time = (Read-Host "Start time (HH:MM:SS)"),
         [string]$Duration  = (Read-Host  "Duration (HH:MM:SS)"),
-    
+
     [Parameter(Mandatory=$false)]
         [string]$Path = (Get-Location).path,
         [string]$Message = $null,
@@ -159,19 +159,15 @@ Function Get-SDDCevents
         [bool]$FilterInformation = $false,
         [array]$ProviderName = $null,
         [bool]$Backwards = $false,
-        [bool]$detailed = $false
-        
+        [string]$logname = $null,
+        [bool]$Detailed = $false
 
     )
 
 # Gather evtx files
 $Evtxfiles = Get-ChildItem -path $path -filter "$Logname*" -Include *.evtx -Recurse
 
-#create Hashtable
-$filter = New-Hashtable -hLogname $logname -hLogpath $Evtxfile.fullname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction stop
 
-Write-Host "Used filters:" -ForegroundColor Yellow
-$filter
 
 # Default event level: Informational included
 # Information level filter
@@ -179,13 +175,21 @@ $maxlevel = 4
 
 if ($Filterinformation -eq $true)
     {
-        [int]$maxlevel = 3 
-        Write-host "Information events excluded" -ForegroundColor Yellow
+        [int]$maxlevel = 3
     }
-else 
+else
     {
-        Write-host "All events included" -ForegroundColor Yellow    
+        Write-host "All events included" -ForegroundColor Yellow
     }# Read logs
+
+$Evtxfiles = Get-ChildItem -path $path -filter "*$logfile*" -Include *.evtx -Recurse
+
+#create Hashtable
+
+
+
+
+# Read logs
 
     foreach($Evtxfile in $Evtxfiles)
     {
@@ -193,26 +197,26 @@ else
 # Show actual log file
 
     ((Get-WinEvent -Path $Evtxfile.FullName -MaxEvents 10 ) | Where-Object machinename -ne $null | Select-Object Machinename,logname)[0]
-    
+
     Write-Host "Log location: $Evtxfile `n" -ForegroundColor Yellow
 
 
 # Read log
+            $filter = New-Hashtable -hLogname $logfile -hLogpath $evtxfile.fullname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction SilentlyContinue
 
+            $output =  Get-winevent -FilterHashtable $Filter -ErrorAction SilentlyContinue  | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel}
 
-            $output = Get-winevent -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} 
-                        
 
 
 # Write log entries to host
-    
+
         if ($detailed -ne $false)
             {
-            $output | Sort-Object TimeCreated | Format-List Timecreated,Providername,Id,Leveldisplayname,Message 
+            $output | Sort-Object TimeCreated | Format-List Timecreated,Providername,Id,Leveldisplayname,Message
             }
         else
             {
-            $output | Sort-Object TimeCreated | Format-Table Timecreated,Providername,Id,Leveldisplayname,Message 
+            $output | Sort-Object TimeCreated | Format-Table Timecreated,Providername,Id,Leveldisplayname,Message -Wrap
             }
     }
  }
@@ -269,15 +273,12 @@ Get-AZHCIClusterEvents -ClusterNodes strhci03,strhci02 -Logname *smbclient* -Fil
 .NOTES
 General notes
 #>
-Function Get-AzsOSEvents
-
+Function Get-ClusterOSEvents
     {
-        
-        param 
+        param
         (
         [Parameter(Mandatory=$true)]
-            [string]$Logname = (Read-Host "Logname (* for wildcard)"), 
-           
+            [string]$Logname = (Read-Host "Logname (* for wildcard)"),
         [Parameter(Mandatory=$false)]
             $Cluster = (Get-Cluster -ErrorAction SilentlyContinue),
             $ClusterNodes = $null,
@@ -290,23 +291,10 @@ Function Get-AzsOSEvents
             [string]$Time = (get-date -format "HH:mm:ss"),
             [string]$Duration  = "1",
             [bool]$Detailed = $false,
-            [bool]$ExportToXML = $false
+            [string]$ExportPath = $null
         )
 
-#gather clusternodes if not defined
-If ($cluster -ne $null)
-        {
-        $ClusterNodes = Get-ClusterNode -Cluster $Cluster -ErrorAction SilentlyContinue
-        }        
-
-        #revert to local computer if clusternodes are not defined
-if ($Clusternodes -eq $null)
-        {
-            $ClusterNodes = $env:COMPUTERNAME
-        }
-
 #create Hashtable
-
 $filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction SilentlyContinue
 
 Write-Host "Used filters:" -ForegroundColor Yellow
@@ -319,12 +307,11 @@ $maxlevel = 4
 
 if ($Filterinformation -eq $true)
     {
-        [int]$maxlevel = 3 
-        Write-host "Information events excluded" -ForegroundColor Yellow
+        [int]$maxlevel = 3
     }
-else 
+else
     {
-        Write-host "All events included" -ForegroundColor Yellow    
+        Write-host "All events included" -ForegroundColor Yellow
     }
 
 
@@ -333,37 +320,43 @@ else
     foreach ($ClusterNode in $ClusterNodes)
         {
             Write-host "$clusternode's $logname log" -ForegroundColor Yellow
-            
-            
-            
+
+
+
 
 # Read log
-    
-    # Filter by message
-            
-    
-    Try {$output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter -ErrorAction stop | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel} }
-    Catch {Write-Host $_.Exception.Message -ForegroundColor Red}
-    $output = $output | Where-Object message -like "*$message*"
+    $filter
+    $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel}
 
 
 # Write log entries to host
-    
         if ($detailed -ne $false)
             {
-            $output | Sort-Object TimeCreated | Format-List Timecreated,Providername,Id,Leveldisplayname,Message,ProcessID,ThreadID,User,Machinename 
+            $output | Sort-Object TimeCreated | Format-List Timecreated,Providername,Id,Leveldisplayname,Message
             }
         else
             {
-            $output | Sort-Object TimeCreated | Format-Table Timecreated,Providername,Id,Leveldisplayname,Message -wrap
+            $output | Sort-Object TimeCreated | Format-Table Timecreated,Providername,Id,Leveldisplayname,Message
             }
+
+#Export filtered events to XML
+            if ($ExportPath -ne $null)
+            {
+                $filedate = (get-date -Format mmddyyyy_hhmmss).tostring()
+                [string]$filename = "$ClusterNode_$logname_$filedate_.xml"
+                $XMLpath = (Get-Location -Path $ExportPath) + "\" + $filename
+                $output | Export-Clixml -Path $filename
+
+            }
+
         }
-    If ($ExportToXML -eq $true)
+
+#collect xml files and compress them to given path ($exportpath)
+        if ($ExportPath -ne $null)
         {
-            $filedate = (get-date -Format mmddyyyy_hhmmss).tostring()
-            [string]$filename = "$ClusterNodes_$logname_$filedate_$filedate.xml"
-            Write-Host "Exporting "$clusternode"'s "$Logname" log as:"$filename -ForegroundColor Yellow
-            $output | Export-Clixml -Path $filename
+            $XMLfiles = Get-ChildItem -Path $ExportPath -Filter "*.xml" | Where-Object {$_.CreationTime -gt (get-date).AddMinutes(-5)}
+            Compress-Archive -Path $XMLfiles -DestinationPath $ExportPath\$filename.zip -Force
         }
+
     }
 
