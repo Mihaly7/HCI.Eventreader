@@ -268,7 +268,7 @@ Output will be in format-list format, disabled by default
 
 .EXAMPLE
 Checking 2 clusternodes's logs contains the word "smbclient" on 01/10/2024 between 17:00 and 20:00
-Get-AZHCIClusterEvents -ClusterNodes strhci03,strhci02 -Logname *smbclient* -FilterInformation 0 -Date 01/10/2024 -time 17:00:00 -Duration 3
+Get-ClusterOSEvents -ClusterNodes strhci03,strhci02 -Logname *smbclient* -FilterInformation 0 -Date 01/10/2024 -time 17:00:00 -Duration 3
 
 .NOTES
 General notes
@@ -297,8 +297,8 @@ Function Get-ClusterOSEvents
 #create Hashtable
 $filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction SilentlyContinue
 
-Write-Host "Used filters:" -ForegroundColor Yellow
-$filter
+
+
 
 
 # Default event level: Informational included
@@ -308,24 +308,25 @@ $maxlevel = 4
 if ($Filterinformation -eq $true)
     {
         [int]$maxlevel = 3
+		Write-host "Informational events excluded" -ForegroundColor Yellow
     }
 else
     {
         Write-host "All events included" -ForegroundColor Yellow
     }
-
-
+		Write-host "`n Filters:" -ForegroundColor Yellow
+		$filter
 #start event reading
 
     foreach ($ClusterNode in $ClusterNodes)
         {
-            Write-host "$clusternode's $logname log" -ForegroundColor Yellow
+            Write-host "`n $clusternode's $logname log" -ForegroundColor Yellow
 
 
 
 
 # Read log
-    $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel}
+    $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter -ErrorAction SilentlyContinue | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel}
 
 
 # Write log entries to host
@@ -343,7 +344,7 @@ else
             {
                 $filedate = (get-date -Format mmddyyyy_hhmmss).tostring()
                 [string]$filename = "$ClusterNode_$logname_$filedate_.xml"
-                $XMLpath = (Get-Location -Path $ExportPath) + "\" + $filename
+                $XMLpath = (Get-Item -Path $ExportPath).fullname + "\" + $filename
                 $output | Export-Clixml -Path $filename
 
             }
