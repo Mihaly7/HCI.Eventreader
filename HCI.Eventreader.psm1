@@ -291,7 +291,7 @@ Function Get-ClusterOSEvents
             [string]$Time = (get-date -format "HH:mm:ss"),
             [string]$Duration  = "1",
             [bool]$Detailed = $false,
-            [string]$ExportPath = $null
+            $ExportPath = $null
         )
 
 #create Hashtable
@@ -325,7 +325,6 @@ else
 
 
 # Read log
-    $filter
     $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel}
 
 
