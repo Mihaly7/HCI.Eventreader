@@ -294,6 +294,14 @@ Function Get-ClusterOSEvents
             $ExportPath = $null
         )
 
+
+#get computers
+If ($cluster -ne $null)
+{
+$Clusternodes = (Get-Clusternode -cluster $Cluster).name
+}
+
+
 #create Hashtable
 $filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction SilentlyContinue
 
