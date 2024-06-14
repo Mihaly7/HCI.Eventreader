@@ -206,6 +206,9 @@ $Evtxfiles = Get-ChildItem -path $path -filter "*$logfile*" -Include *.evtx -Rec
 
             $output =  Get-winevent -FilterHashtable $Filter -ErrorAction SilentlyContinue  | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel}
 
+# Filter by message
+            
+            $output = $output | where message -like "*$message*"
 
 
 # Write log entries to host
@@ -294,14 +297,6 @@ Function Get-ClusterOSEvents
             $ExportPath = $null
         )
 
-
-#get computers
-If ($cluster -ne $null)
-{
-$Clusternodes = (Get-Clusternode -cluster $Cluster).name
-}
-
-
 #create Hashtable
 $filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction SilentlyContinue
 
@@ -336,6 +331,9 @@ else
 # Read log
     $output =  Get-winevent -ComputerName $ClusterNode -FilterHashtable $Filter -ErrorAction SilentlyContinue | Where-Object {$_.Level -gt 0 -and $_.Level -le $maxlevel}
 
+# Filter by message
+            
+            $output = $output | where message -like "*$message*"
 
 # Write log entries to host
         if ($detailed -ne $false)
@@ -344,7 +342,7 @@ else
             }
         else
             {
-            $output | Sort-Object TimeCreated | Format-Table Timecreated,Providername,Id,Leveldisplayname,Message
+            $output | Sort-Object TimeCreated | Format-Table Timecreated,Providername,Id,Leveldisplayname,Message -Wrap
             }
 
 #Export filtered events to XML
