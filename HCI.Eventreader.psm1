@@ -283,7 +283,7 @@ Function Get-ClusterOSEvents
         [Parameter(Mandatory=$true)]
             [string]$Logname = (Read-Host "Logname (* for wildcard)"),
         [Parameter(Mandatory=$false)]
-            $Cluster = (Get-Cluster -ErrorAction SilentlyContinue),
+            $Cluster = (Get-Cluster),
             $ClusterNodes = $null,
             [string]$Message = $null,
             [array]$EventId = $null,
@@ -299,9 +299,6 @@ Function Get-ClusterOSEvents
 
 #create Hashtable
 $filter = New-Hashtable -hLogname $logname -hDate $date -hTime $time -hDuration $Duration -hEventId $EventId -hProviderName $ProviderName -hBackwards $Backwards -ErrorAction SilentlyContinue
-
-
-
 
 
 # Default event level: Informational included
@@ -321,6 +318,12 @@ else
 		$filter
 #start event reading
 
+If ($ClusterNodes -eq $null)
+	{
+	$Clusternodes = Get-ClusterNode -Cluster $cluster
+	}
+
+
     foreach ($ClusterNode in $ClusterNodes)
         {
             Write-host "`n $clusternode's $logname log" -ForegroundColor Yellow
@@ -333,7 +336,7 @@ else
 
 # Filter by message
             
-            $output = $output | where message -like "*$message*"
+           $output = $output | where message -like "*$message*"
 
 # Write log entries to host
         if ($detailed -ne $false)
